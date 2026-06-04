@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transport.MD — Găsește Șoferul Perfect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:   #F8F4EE;
+  --cream2:  #F0EBE1;
+  --ink:     #1A1208;
+  --red:     #C0392B;
+  --red2:    #E74C3C;
+  --gold:    #B8860B;
+  --muted:   #7A6A55;
+  --border:  #D4C4A8;
+  --white:   #FEFCF9;
+  --ff-head: 'Playfair Display', Georgia, serif;
+  --ff-body: 'DM Sans', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--cream);
+  color:var(--ink);
+  font-family:var(--ff-body);
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ─── CUSTOM CURSOR ─── */
+#cursor{
+  position:fixed;width:12px;height:12px;
+  background:var(--red);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .2s,height .2s,background .2s;
+  mix-blend-mode:multiply;
+}
+#cursor-ring{
+  position:fixed;width:36px;height:36px;
+  border:1.5px solid var(--red);border-radius:50%;
+  pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:all .12s ease-out;
+  opacity:.6;
+}
+body:has(a:hover) #cursor,
+body:has(button:hover) #cursor{width:20px;height:20px;background:var(--gold);}
+
+/* ─── PIXEL INTRO OVERLAY ─── */
+#intro{
+  position:fixed;inset:0;z-index:10000;
+  background:var(--cream);
+  display:grid;
+  grid-template-columns:repeat(30,1fr);
+  grid-template-rows:repeat(20,1fr);
+  pointer-events:none;
+}
+.px-cell{
+  background:var(--cream);
+  transition:background .05s;
+}
+.px-cell.red{background:var(--red);}
+.px-cell.ink{background:var(--ink);}
+.px-cell.gold{background:var(--gold);}
+
+/* ─── ORNAMENT CANVAS ─── */
+#ornament-canvas{
+  position:fixed;top:0;left:0;width:100%;
+  pointer-events:none;z-index:9990;
+  opacity:0;
+  transition:opacity 1s;
+}
+
+/* ─── NAV ─── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.2rem 3rem;
+  background:rgba(248,244,238,.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  transform:translateY(-100%);
+  transition:transform .8s cubic-bezier(.16,1,.3,1);
+}
+nav.visible{transform:translateY(0);}
+.nav-logo{
+  font-family:var(--ff-head);
+  font-size:1.5rem;font-weight:900;
+  color:var(--ink);letter-spacing:-.02em;
+}
+.nav-logo span{color:var(--red);}
+.nav-links{display:flex;gap:2rem;list-style:none;}
+.nav-links a{
+  font-size:.85rem;font-weight:500;
+  color:var(--muted);text-decoration:none;
+  letter-spacing:.06em;text-transform:uppercase;
+  transition:color .2s;
+  cursor:none;
+}
+.nav-links a:hover{color:var(--ink);}
+.nav-cta{
+  background:var(--ink);color:var(--cream);
+  padding:.6rem 1.6rem;border-radius:100px;
+  font-size:.82rem;font-weight:600;
+  text-decoration:none;cursor:none;
+  transition:background .2s,transform .2s;
+  letter-spacing:.04em;
+}
+.nav-cta:hover{background:var(--red);transform:translateY(-1px);}
+
+/* ─── HERO ─── */
+#hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  padding:8rem 3rem 4rem;
+  position:relative;overflow:hidden;
+}
+.hero-ornament-top{
+  position:absolute;top:0;left:0;right:0;
+  height:8px;
+  background:repeating-linear-gradient(90deg,
+    var(--red) 0,var(--red) 8px,
+    var(--ink) 8px,var(--ink) 16px,
+    var(--red) 16px,var(--red) 24px,
+    transparent 24px,transparent 32px
+  );
+}
+.hero-eyebrow{
+  font-size:.78rem;font-weight:600;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--red);margin-bottom:1.5rem;
+  opacity:0;transform:translateY(20px);
+  transition:all .8s .3s cubic-bezier(.16,1,.3,1);
+}
+.hero-eyebrow.in{opacity:1;transform:translateY(0);}
+.hero-h1{
+  font-family:var(--ff-head);
+  font-size:clamp(3.2rem,7vw,7rem);
+  font-weight:900;line-height:1.0;
+  letter-spacing:-.03em;
+  max-width:780px;
+  opacity:0;transform:translateY(40px);
+  transition:all 1s .5s cubic-bezier(.16,1,.3,1);
+}
+.hero-h1.in{opacity:1;transform:translateY(0);}
+.hero-h1 em{color:var(--red);font-style:normal;}
+.hero-sub{
+  font-size:1.15rem;font-weight:300;
+  color:var(--muted);max-width:500px;
+  margin-top:1.5rem;line-height:1.7;
+  opacity:0;transform:translateY(20px);
+  transition:all .9s .8s cubic-bezier(.16,1,.3,1);
+}
+.hero-sub.in{opacity:1;transform:translateY(0);}
+.hero-actions{
+  display:flex;gap:1rem;margin-top:2.5rem;flex-wrap:wrap;
+  opacity:0;transform:translateY(20px);
+  transition:all .9s 1s cubic-bezier(.16,1,.3,1);
+}
+.hero-actions.in{opacity:1;transform:translateY(0);}
+.btn-primary{
+  background:var(--ink);color:var(--white);
+  padding:.9rem 2.4rem;border-radius:100px;
+  font-size:.9rem;font-weight:600;
+  text-decoration:none;cursor:none;
+  transition:all .2s;letter-spacing:.02em;
+  border:2px solid var(--ink);
+}
+.btn-primary:hover{background:var(--red);border-color:var(--red);}
+.btn-outline{
+  background:transparent;color:var(--ink);
+  padding:.9rem 2.4rem;border-radius:100px;
+  font-size:.9rem;font-weight:600;
+  text-decoration:none;cursor:none;
+  transition:all .2s;letter-spacing:.02em;
+  border:2px solid var(--border);
+}
+.btn-outline:hover{border-color:var(--ink);}
+.hero-stats{
+  display:flex;gap:3rem;margin-top:4rem;flex-wrap:wrap;
+  opacity:0;transition:opacity 1s 1.3s;
+}
+.hero-stats.in{opacity:1;}
+.hero-stat-n{
+  font-family:var(--ff-head);
+  font-size:2.4rem;font-weight:900;color:var(--ink);
+}
+.hero-stat-l{font-size:.8rem;color:var(--muted);margin-top:.2rem;letter-spacing:.06em;text-transform:uppercase;}
+
+/* ─── ROAD ANIMATION ─── */
+#road-container{
+  position:absolute;right:-60px;bottom:0;
+  width:55%;height:100%;
+  opacity:0;
+  transition:opacity 1.5s 1.5s;
+  pointer-events:none;
+}
+#road-container.in{opacity:1;}
+#road-svg{width:100%;height:100%;}
+
+/* ─── ORNAMENT DIVIDER ─── */
+.ornament-divider{
+  width:100%;height:24px;
+  background:
+    repeating-linear-gradient(90deg,
+      var(--red) 0 4px, transparent 4px 8px,
+      var(--ink) 8px 12px, transparent 12px 16px,
+      var(--red) 16px 20px, transparent 20px 24px,
+      transparent 24px 32px
+    );
+  margin:0;
+}
+
+/* ─── SECTION BASE ─── */
+section{padding:6rem 3rem;}
+.section-label{
+  font-size:.75rem;font-weight:600;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--red);margin-bottom:.75rem;
+}
+.section-title{
+  font-family:var(--ff-head);
+  font-size:clamp(2rem,4vw,3.2rem);
+  font-weight:900;line-height:1.1;letter-spacing:-.02em;
+  max-width:600px;
+}
+
+/* ─── SEARCH PANEL ─── */
+#search-section{background:var(--white);}
+.search-panel{
+  max-width:1100px;margin:0 auto;
+}
+.search-box{
+  background:var(--cream);
+  border:1.5px solid var(--border);
+  border-radius:20px;
+  padding:2.5rem;
+  margin-top:2.5rem;
+  position:relative;
+  overflow:hidden;
+}
+.search-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--red),var(--gold),var(--ink));
+}
+.search-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:1rem;margin-bottom:1.5rem;
+}
+.sf{display:flex;flex-direction:column;gap:.4rem;}
+.sf label{
+  font-size:.7rem;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);
+}
+.sf input,.sf select{
+  background:var(--white);
+  border:1.5px solid var(--border);
+  border-radius:10px;padding:.7rem 1rem;
+  font-family:var(--ff-body);font-size:.88rem;
+  color:var(--ink);outline:none;
+  transition:border-color .2s;
+  cursor:none;
+}
+.sf input:focus,.sf select:focus{border-color:var(--ink);}
+.sf input::placeholder{color:var(--border);}
+.search-btn{
+  background:var(--ink);color:var(--white);
+  padding:.85rem 2.5rem;border-radius:100px;
+  font-family:var(--ff-body);font-size:.9rem;font-weight:600;
+  border:none;cursor:none;
+  transition:background .2s;letter-spacing:.02em;
+  display:flex;align-items:center;gap:.6rem;
+}
+.search-btn:hover{background:var(--red);}
+
+/* ─── DRIVER CARDS ─── */
+.drivers-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:1.5rem;margin-top:2rem;
+}
+.driver-card{
+  background:var(--white);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:1.75rem;
+  position:relative;overflow:hidden;
+  transition:all .25s;
+  cursor:none;
+}
+.driver-card::after{
+  content:'';position:absolute;
+  bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--red),var(--gold));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .3s;
+}
+.driver-card:hover{
+  transform:translateY(-4px);
+  border-color:var(--ink);
+  box-shadow:0 12px 40px rgba(26,18,8,.1);
+}
+.driver-card:hover::after{transform:scaleX(1);}
+.dc-avatar{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--cream2);
+  border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-head);font-size:1.3rem;font-weight:900;
+  color:var(--ink);margin-bottom:1.1rem;
+}
+.dc-name{
+  font-family:var(--ff-head);font-size:1.15rem;
+  font-weight:700;margin-bottom:.25rem;
+}
+.dc-route{
+  font-size:.82rem;color:var(--muted);
+  display:flex;align-items:center;gap:.4rem;
+  margin-bottom:1rem;
+}
+.dc-route svg{width:14px;height:14px;flex-shrink:0;}
+.dc-chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;}
+.chip{
+  padding:.3rem .75rem;border-radius:100px;
+  font-size:.72rem;font-weight:600;letter-spacing:.04em;
+  border:1px solid var(--border);color:var(--muted);
+  background:var(--cream);
+}
+.chip.red{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.3);color:var(--red);}
+.chip.gold{background:rgba(184,134,11,.08);border-color:rgba(184,134,11,.3);color:var(--gold);}
+.dc-meta{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-top:1rem;border-top:1px solid var(--border);
+}
+.dc-price{
+  font-family:var(--ff-head);font-size:1.3rem;
+  font-weight:900;color:var(--ink);
+}
+.dc-price span{font-size:.8rem;font-weight:400;color:var(--muted);}
+.dc-btn{
+  background:var(--ink);color:var(--white);
+  padding:.5rem 1.2rem;border-radius:100px;
+  font-size:.78rem;font-weight:600;
+  border:none;cursor:none;transition:background .2s;
+}
+.dc-btn:hover{background:var(--red);}
+
+/* ─── SORT / FILTER BAR ─── */
+.filter-bar{
+  display:flex;gap:.75rem;flex-wrap:wrap;
+  margin-bottom:1.5rem;margin-top:2rem;
+}
+.filter-chip{
+  padding:.5rem 1.1rem;border-radius:100px;
+  font-size:.78rem;font-weight:600;
+  border:1.5px solid var(--border);
+  background:transparent;color:var(--muted);
+  cursor:none;transition:all .18s;
+  font-family:var(--ff-body);
+}
+.filter-chip:hover,.filter-chip.active{
+  background:var(--ink);color:var(--white);border-color:var(--ink);
+}
+
+/* ─── PRICING ─── */
+#pricing-section{background:var(--cream2);}
+.pricing-intro{max-width:900px;margin:0 auto;text-align:center;}
+.pricing-intro .section-title{margin:0 auto 1rem;}
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:1.5rem;margin-top:3rem;max-width:900px;margin-left:auto;margin-right:auto;
+}
+.price-card{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:16px;padding:2rem;text-align:center;
+  position:relative;overflow:hidden;transition:all .25s;
+}
+.price-card.featured{
+  background:var(--ink);color:var(--white);
+  border-color:var(--ink);
+}
+.price-card.featured .pc-label{color:rgba(255,255,255,.5);}
+.price-card.featured .pc-from{color:rgba(255,255,255,.6);}
+.price-card.featured .pc-desc{color:rgba(255,255,255,.6);}
+.price-card:hover:not(.featured){transform:translateY(-4px);box-shadow:0 12px 40px rgba(26,18,8,.08);}
+.pc-route{
+  font-family:var(--ff-head);font-size:1.05rem;
+  font-weight:700;margin-bottom:.5rem;
+}
+.pc-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem;}
+.pc-price{
+  font-family:var(--ff-head);font-size:2.8rem;
+  font-weight:900;line-height:1;margin-bottom:.25rem;
+}
+.price-card.featured .pc-price{color:var(--gold);}
+.pc-from{font-size:.78rem;color:var(--muted);margin-bottom:1.5rem;}
+.pc-features{list-style:none;text-align:left;display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.75rem;}
+.pc-features li{
+  font-size:.83rem;display:flex;align-items:center;gap:.5rem;
+}
+.pc-features li::before{content:'✓';color:var(--red);font-weight:700;}
+.price-card.featured .pc-features li::before{color:var(--gold);}
+.pc-btn{
+  width:100%;padding:.8rem;border-radius:100px;
+  font-family:var(--ff-body);font-size:.85rem;font-weight:600;
+  border:2px solid var(--border);background:transparent;
+  cursor:none;transition:all .2s;color:var(--ink);
+}
+.price-card.featured .pc-btn{
+  background:var(--red);border-color:var(--red);color:var(--white);
+}
+.pc-btn:hover{background:var(--ink);border-color:var(--ink);color:var(--white);}
+
+/* ─── ABOUT / VIDEO SECTION ─── */
+#about-section{
+  background:var(--ink);color:var(--white);
+  padding:0;overflow:hidden;
+  position:relative;min-height:70vh;
+  display:flex;align-items:center;
+}
+.about-inner{
+  max-width:1100px;margin:0 auto;
+  padding:6rem 3rem;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:5rem;align-items:center;
+}
+.about-label{color:var(--gold);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:1rem;}
+.about-title{
+  font-family:var(--ff-head);font-size:clamp(2rem,4vw,3rem);
+  font-weight:900;line-height:1.1;letter-spacing:-.02em;margin-bottom:1.5rem;
+}
+.about-title em{color:var(--red);font-style:normal;}
+.about-text{color:rgba(255,255,255,.65);line-height:1.8;font-size:.95rem;margin-bottom:2rem;}
+.about-visual{
+  position:relative;border-radius:20px;overflow:hidden;
+  aspect-ratio:16/10;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+}
+#road-video-canvas{width:100%;height:100%;display:block;}
+.about-visual-label{
+  position:absolute;bottom:1rem;left:1rem;
+  background:rgba(0,0,0,.6);color:white;
+  padding:.4rem .9rem;border-radius:100px;
+  font-size:.72rem;font-weight:600;letter-spacing:.08em;
+  backdrop-filter:blur(8px);
+}
+
+/* ─── STATS ─── */
+#stats-section{background:var(--cream);}
+.stats-panel{max-width:1100px;margin:0 auto;}
+.stats-table-wrap{
+  margin-top:2.5rem;
+  border:1.5px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  background:var(--white);
+}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--ink);color:var(--white);}
+th{
+  padding:.9rem 1.25rem;text-align:left;
+  font-size:.72rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--cream);}
+td{padding:.85rem 1.25rem;font-size:.87rem;}
+.td-name{font-weight:600;}
+.td-badge{
+  display:inline-block;padding:.25rem .7rem;border-radius:100px;
+  font-size:.7rem;font-weight:600;
+  background:rgba(192,57,43,.08);color:var(--red);
+  border:1px solid rgba(192,57,43,.2);
+}
+.sort-btns{display:flex;gap:.5rem;margin-top:1.5rem;flex-wrap:wrap;}
+.sort-btn{
+  padding:.5rem 1.1rem;border-radius:100px;
+  font-size:.78rem;font-weight:600;
+  border:1.5px solid var(--border);
+  background:transparent;color:var(--muted);
+  cursor:none;transition:all .18s;font-family:var(--ff-body);
+}
+.sort-btn:hover,.sort-btn.on{background:var(--ink);color:var(--white);border-color:var(--ink);}
+.stat-cards{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:1rem;margin-top:2rem;
+}
+.stat-card-s{
+  background:var(--cream2);border:1.5px solid var(--border);
+  border-radius:12px;padding:1.25rem 1.5rem;
+}
+.scn{font-family:var(--ff-head);font-size:2rem;font-weight:900;color:var(--ink);}
+.scl{font-size:.75rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:.3rem;}
+
+/* ─── FAQ ─── */
+#faq-section{background:var(--white);}
+.faq-grid{
+  max-width:800px;margin:2.5rem auto 0;
+  display:flex;flex-direction:column;gap:.75rem;
+}
+.faq-item{
+  border:1.5px solid var(--border);border-radius:12px;
+  overflow:hidden;
+}
+.faq-q{
+  width:100%;padding:1.15rem 1.5rem;
+  background:transparent;border:none;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--ff-body);font-size:.92rem;font-weight:600;
+  color:var(--ink);cursor:none;text-align:left;
+  transition:background .18s;
+}
+.faq-q:hover{background:var(--cream);}
+.faq-q .icon{
+  width:24px;height:24px;border-radius:50%;
+  border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:1rem;
+  transition:transform .3s,background .2s;
+}
+.faq-item.open .faq-q .icon{transform:rotate(45deg);background:var(--ink);border-color:var(--ink);color:white;}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .35s cubic-bezier(.16,1,.3,1),padding .3s;
+  padding:0 1.5rem;
+  font-size:.87rem;color:var(--muted);line-height:1.75;
+}
+.faq-item.open .faq-a{max-height:300px;padding:.25rem 1.5rem 1.25rem;}
+
+/* ─── CONTACT / QUESTION PANEL ─── */
+#contact-section{background:var(--cream2);}
+.contact-grid{
+  max-width:1000px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:4rem;align-items:start;
+}
+.contact-info .section-title{max-width:100%;}
+.contact-points{margin-top:2rem;display:flex;flex-direction:column;gap:1.25rem;}
+.contact-point{display:flex;gap:1rem;align-items:flex-start;}
+.cp-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--cream);border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;
+}
+.cp-label{font-size:.75rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.2rem;}
+.cp-val{font-size:.9rem;font-weight:600;color:var(--ink);}
+.contact-form{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:16px;padding:2rem;position:relative;
+}
+.contact-form::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--red),var(--gold));
+  border-radius:16px 16px 0 0;
+}
+.cf-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem;}
+.cf-group label{font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.cf-group input,.cf-group textarea,.cf-group select{
+  background:var(--cream);border:1.5px solid var(--border);
+  border-radius:10px;padding:.7rem 1rem;
+  font-family:var(--ff-body);font-size:.87rem;color:var(--ink);
+  outline:none;transition:border-color .2s;resize:none;cursor:none;
+}
+.cf-group input:focus,.cf-group textarea:focus{border-color:var(--ink);}
+.cf-group textarea{height:100px;}
+.cf-submit{
+  width:100%;padding:.9rem;border-radius:100px;
+  background:var(--ink);color:var(--white);
+  font-family:var(--ff-body);font-size:.9rem;font-weight:600;
+  border:none;cursor:none;transition:background .2s;
+}
+.cf-submit:hover{background:var(--red);}
+#form-success{
+  display:none;text-align:center;padding:1.5rem;
+  color:var(--gold);font-family:var(--ff-head);font-size:1.1rem;
+}
+
+/* ─── FOOTER ─── */
+footer{
+  background:var(--ink);color:rgba(255,255,255,.5);
+  padding:3rem;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:1rem;
+}
+.footer-logo{
+  font-family:var(--ff-head);font-size:1.3rem;
+  font-weight:900;color:var(--white);
+}
+.footer-logo span{color:var(--red);}
+footer small{font-size:.78rem;}
+
+/* ─── ORNAMENT PIXEL BORDERS ─── */
+.px-border{
+  width:100%;height:10px;overflow:hidden;
+  display:flex;
+}
+.px-border-cell{flex:1;height:100%;}
+
+/* ─── SCROLL REVEAL ─── */
+.reveal{opacity:0;transform:translateY(28px);transition:all .9s cubic-bezier(.16,1,.3,1);}
+.reveal.in{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:.1s;}
+.reveal-delay-2{transition-delay:.2s;}
+.reveal-delay-3{transition-delay:.3s;}
+.reveal-delay-4{transition-delay:.4s;}
+
+@media(max-width:768px){
+  nav{padding:1rem 1.5rem;}
+  #hero{padding:7rem 1.5rem 3rem;}
+  section{padding:4rem 1.5rem;}
+  .about-inner{grid-template-columns:1fr;gap:2.5rem;padding:4rem 1.5rem;}
+  .contact-grid{grid-template-columns:1fr;gap:2rem;}
+  .nav-links{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- PIXEL INTRO -->
+<div id="intro"></div>
+
+<!-- ORNAMENT TOP CANVAS -->
+<canvas id="ornament-canvas" height="32"></canvas>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo">Transport<span>.MD</span></div>
+  <ul class="nav-links">
+    <li><a href="#search-section">Găsește Șofer</a></li>
+    <li><a href="#pricing-section">Prețuri</a></li>
+    <li><a href="#stats-section">Statistici</a></li>
+    <li><a href="#faq-section">Întrebări</a></li>
+    <li><a href="#contact-section">Contact</a></li>
+  </ul>
+  <a href="#search-section" class="nav-cta">Caută acum</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-ornament-top"></div>
+  <div class="hero-eyebrow" id="eyebrow">Moldova · Transporturi Rutiere · Din 2024</div>
+  <h1 class="hero-h1" id="h1">Alege<br><em>calitatea</em><br>drumului.</h1>
+  <p class="hero-sub" id="hsub">Găsește șoferul perfect pentru orice rută din Moldova. Verificat, cu experiență reală și preț corect.</p>
+  <div class="hero-actions" id="hact">
+    <a href="#search-section" class="btn-primary">Caută Șofer →</a>
+    <a href="#about-section" class="btn-outline">Cum funcționează</a>
+  </div>
+  <div class="hero-stats" id="hstats">
+    <div>
+      <div class="hero-stat-n" id="hn1">0</div>
+      <div class="hero-stat-l">Șoferi Verificați</div>
+    </div>
+    <div>
+      <div class="hero-stat-n" id="hn2">0</div>
+      <div class="hero-stat-l">Km Total Parcurși</div>
+    </div>
+    <div>
+      <div class="hero-stat-n" id="hn3">0</div>
+      <div class="hero-stat-l">Rute Disponibile</div>
+    </div>
+  </div>
+
+  <!-- Road SVG animation -->
+  <div id="road-container">
+    <svg id="road-svg" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="roadFade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--cream)" stop-opacity="1"/>
+          <stop offset="30%" stop-color="var(--cream)" stop-opacity="0"/>
+          <stop offset="70%" stop-color="var(--cream)" stop-opacity="0"/>
+          <stop offset="100%" stop-color="var(--cream)" stop-opacity="1"/>
+        </linearGradient>
+      </defs>
+      <g id="road-group" opacity="0">
+        <!-- Road base -->
+        <rect x="200" y="0" width="200" height="800" fill="#E0D8CC" rx="4"/>
+        <!-- Center line dashes -->
+        <g id="dash-group" fill="#B8A88A">
+          <rect x="295" y="0" width="10" height="60" rx="3"/>
+          <rect x="295" y="80" width="10" height="60" rx="3"/>
+          <rect x="295" y="160" width="10" height="60" rx="3"/>
+          <rect x="295" y="240" width="10" height="60" rx="3"/>
+          <rect x="295" y="320" width="10" height="60" rx="3"/>
+          <rect x="295" y="400" width="10" height="60" rx="3"/>
+          <rect x="295" y="480" width="10" height="60" rx="3"/>
+          <rect x="295" y="560" width="10" height="60" rx="3"/>
+          <rect x="295" y="640" width="10" height="60" rx="3"/>
+          <rect x="295" y="720" width="10" height="60" rx="3"/>
+        </g>
+        <!-- Trees left -->
+        <circle cx="160" cy="120" r="28" fill="#8B7355" opacity=".35"/>
+        <circle cx="145" cy="300" r="22" fill="#8B7355" opacity=".25"/>
+        <circle cx="170" cy="500" r="30" fill="#8B7355" opacity=".3"/>
+        <circle cx="150" cy="680" r="20" fill="#8B7355" opacity=".2"/>
+        <!-- Trees right -->
+        <circle cx="440" cy="180" r="25" fill="#8B7355" opacity=".3"/>
+        <circle cx="455" cy="380" r="30" fill="#8B7355" opacity=".35"/>
+        <circle cx="435" cy="560" r="22" fill="#8B7355" opacity=".25"/>
+        <!-- Fade overlay -->
+        <rect x="0" y="0" width="600" height="800" fill="url(#roadFade)"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<div class="ornament-divider"></div>
+
+<!-- SEARCH SECTION -->
+<section id="search-section">
+  <div class="search-panel">
+    <div class="section-label reveal">Găsește Șoferul Tău</div>
+    <h2 class="section-title reveal reveal-delay-1">Caută după rută,<br>experiență sau preț</h2>
+
+    <div class="search-box reveal reveal-delay-2">
+      <div class="search-grid">
+        <div class="sf">
+          <label>Ruta</label>
+          <input type="text" id="s-ruta" placeholder="ex: Chișinău-București">
+        </div>
+        <div class="sf">
+          <label>Km Minim</label>
+          <input type="number" id="s-km" placeholder="ex: 5000">
+        </div>
+        <div class="sf">
+          <label>Salariu Max (lei)</label>
+          <input type="number" id="s-sal" placeholder="ex: 9000">
+        </div>
+        <div class="sf">
+          <label>Sortare</label>
+          <select id="s-sort">
+            <option value="">— Fără sortare —</option>
+            <option value="km_desc">Km ↓ Descrescător</option>
+            <option value="km_asc">Km ↑ Crescător</option>
+            <option value="sal_asc">Salariu ↑ Crescător</option>
+            <option value="sal_desc">Salariu ↓ Descrescător</option>
+            <option value="nume">Nume A–Z</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
+        <button class="search-btn" onclick="searchDrivers()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Caută Șofer
+        </button>
+        <button class="filter-chip" onclick="resetSearch()">✕ Resetează</button>
+      </div>
+    </div>
+
+    <div class="filter-bar reveal reveal-delay-3" id="filter-bar">
+      <button class="filter-chip active" onclick="filterBy('all',this)">Toți</button>
+      <button class="filter-chip" onclick="filterBy('Chisinau-Bucuresti',this)">Chișinău–București</button>
+      <button class="filter-chip" onclick="filterBy('Chisinau-Balti',this)">Chișinău–Bălți</button>
+      <button class="filter-chip" onclick="filterBy('Chisinau-Iasi',this)">Chișinău–Iași</button>
+      <button class="filter-chip" onclick="filterBy('Chisinau-Odessa',this)">Chișinău–Odessa</button>
+      <button class="filter-chip" onclick="filterBy('Chisinau-Cahul',this)">Chișinău–Cahul</button>
+    </div>
+
+    <div id="drivers-grid" class="drivers-grid reveal reveal-delay-4"></div>
+  </div>
+</section>
+
+<div class="ornament-divider"></div>
+
+<!-- PRICING -->
+<section id="pricing-section">
+  <div class="pricing-intro">
+    <div class="section-label reveal" style="text-align:center">Prețuri Orientative</div>
+    <h2 class="section-title reveal reveal-delay-1" style="text-align:center;margin:0 auto">Tarife medii pe rute<br>principale din Moldova</h2>
+    <p style="color:var(--muted);margin-top:1rem;font-size:.9rem;line-height:1.7" class="reveal reveal-delay-2">
+      Prețurile sunt orientative și variază în funcție de sezon, număr de pasageri și acordul direct cu șoferul.
+    </p>
+  </div>
+  <div class="pricing-grid">
+    <div class="price-card reveal reveal-delay-1">
+      <div class="pc-route">Chișinău → Bălți</div>
+      <div class="pc-label">~140 km · ~2h</div>
+      <div class="pc-price">80</div>
+      <div class="pc-from">lei / persoană</div>
+      <ul class="pc-features">
+        <li>Plecare zilnică</li>
+        <li>Bagaj inclus</li>
+        <li>Șofer verificat</li>
+      </ul>
+      <button class="pc-btn" onclick="filterBy('Chisinau-Balti',null);document.getElementById('search-section').scrollIntoView({behavior:'smooth'})">Vezi Șoferi</button>
+    </div>
+    <div class="price-card featured reveal reveal-delay-2">
+      <div class="pc-route">Chișinău → București</div>
+      <div class="pc-label">~490 km · ~6h</div>
+      <div class="pc-price">350</div>
+      <div class="pc-from">lei / persoană</div>
+      <ul class="pc-features">
+        <li>Ruta cea mai populară</li>
+        <li>Plecare de 3x/săptămână</li>
+        <li>Bagaj 20kg inclus</li>
+        <li>Asigurare călătorie</li>
+      </ul>
+      <button class="pc-btn" onclick="filterBy('Chisinau-Bucuresti',null);document.getElementById('search-section').scrollIntoView({behavior:'smooth'})">Rezervă Acum</button>
+    </div>
+    <div class="price-card reveal reveal-delay-3">
+      <div class="pc-route">Chișinău → Odessa</div>
+      <div class="pc-label">~230 km · ~3h</div>
+      <div class="pc-price">150</div>
+      <div class="pc-from">lei / persoană</div>
+      <ul class="pc-features">
+        <li>Frontieră inclusă</li>
+        <li>Bagaj inclus</li>
+        <li>Șofer verificat</li>
+      </ul>
+      <button class="pc-btn" onclick="filterBy('Chisinau-Odessa',null);document.getElementById('search-section').scrollIntoView({behavior:'smooth'})">Vezi Șoferi</button>
+    </div>
+    <div class="price-card reveal reveal-delay-1">
+      <div class="pc-route">Chișinău → Iași</div>
+      <div class="pc-label">~110 km · ~1.5h</div>
+      <div class="pc-price">120</div>
+      <div class="pc-from">lei / persoană</div>
+      <ul class="pc-features">
+        <li>Vamă rapidă</li>
+        <li>Bagaj inclus</li>
+        <li>Flexibil orar</li>
+      </ul>
+      <button class="pc-btn" onclick="filterBy('Chisinau-Iasi',null);document.getElementById('search-section').scrollIntoView({behavior:'smooth'})">Vezi Șoferi</button>
+    </div>
+    <div class="price-card reveal reveal-delay-2">
+      <div class="pc-route">Chișinău → Cahul</div>
+      <div class="pc-label">~150 km · ~2h</div>
+      <div class="pc-price">90</div>
+      <div class="pc-from">lei / persoană</div>
+      <ul class="pc-features">
+        <li>Plecare zilnică</li>
+        <li>Bagaj inclus</li>
+        <li>Rută sudică</li>
+      </ul>
+      <button class="pc-btn">Vezi Șoferi</button>
+    </div>
+    <div class="price-card reveal reveal-delay-3">
+      <div class="pc-route">Chișinău → Soroca</div>
+      <div class="pc-label">~160 km · ~2.5h</div>
+      <div class="pc-price">100</div>
+      <div class="pc-from">lei / persoană</div>
+      <ul class="pc-features">
+        <li>Rută nordică</li>
+        <li>Bagaj inclus</li>
+        <li>Șofer verificat</li>
+      </ul>
+      <button class="pc-btn">Vezi Șoferi</button>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT / ANIMATED ROAD -->
+<section id="about-section">
+  <div class="about-inner">
+    <div>
+      <div class="about-label">Despre Transport.MD</div>
+      <h2 class="about-title">Siguranță și<br><em>transparență</em><br>pe orice drum.</h2>
+      <p class="about-text">Fiecare șofer din platforma noastră este verificat manual. Vedem istoricul km parcurși, rutele efectuate și feedback-ul călătorilor anteriori.</p>
+      <a href="#search-section" class="btn-primary" style="display:inline-block">Găsește Șofer →</a>
+    </div>
+    <div class="about-visual">
+      <canvas id="road-video-canvas"></canvas>
+      <div class="about-visual-label">🚗 Rute active Moldova</div>
+    </div>
+  </div>
+</section>
+
+<div class="ornament-divider"></div>
+
+<!-- STATISTICS -->
+<section id="stats-section">
+  <div class="stats-panel">
+    <div class="section-label reveal">Date & Statistici</div>
+    <h2 class="section-title reveal reveal-delay-1">Toți șoferii,<br>toate datele.</h2>
+
+    <div class="stat-cards reveal reveal-delay-2" id="stat-cards-row"></div>
+
+    <div class="sort-btns reveal reveal-delay-3">
+      <button class="sort-btn on" onclick="sortTable('id',this)">ID</button>
+      <button class="sort-btn" onclick="sortTable('salariu_desc',this)">Salariu ↓</button>
+      <button class="sort-btn" onclick="sortTable('salariu_asc',this)">Salariu ↑</button>
+      <button class="sort-btn" onclick="sortTable('km_desc',this)">Km ↓</button>
+      <button class="sort-btn" onclick="sortTable('km_asc',this)">Km ↑</button>
+      <button class="sort-btn" onclick="sortTable('nume',this)">Nume A–Z</button>
+    </div>
+
+    <div class="stats-table-wrap reveal reveal-delay-4">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Nume</th><th>Prenume</th><th>Ruta</th><th>Km Parcurși</th><th>Salariu</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="stats-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="ornament-divider"></div>
+
+<!-- FAQ -->
+<section id="faq-section">
+  <div style="max-width:800px;margin:0 auto;text-align:center">
+    <div class="section-label reveal">Întrebări Frecvente</div>
+    <h2 class="section-title reveal reveal-delay-1" style="margin:0 auto">Tot ce vrei să știi<br>înainte să rezervi.</h2>
+  </div>
+  <div class="faq-grid reveal reveal-delay-2" id="faq-list"></div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact-section">
+  <div class="contact-grid">
+    <div class="contact-info">
+      <div class="section-label reveal">Contactează-ne</div>
+      <h2 class="section-title reveal reveal-delay-1">Ai o întrebare?<br>Scriem-ne.</h2>
+      <div class="contact-points reveal reveal-delay-2">
+        <div class="contact-point">
+          <div class="cp-icon">📍</div>
+          <div><div class="cp-label">Adresa</div><div class="cp-val">Chișinău, Republica Moldova</div></div>
+        </div>
+        <div class="contact-point">
+          <div class="cp-icon">📞</div>
+          <div><div class="cp-label">Telefon</div><div class="cp-val">+373 22 000 000</div></div>
+        </div>
+        <div class="contact-point">
+          <div class="cp-icon">✉️</div>
+          <div><div class="cp-label">Email</div><div class="cp-val">contact@transport.md</div></div>
+        </div>
+        <div class="contact-point">
+          <div class="cp-icon">🕐</div>
+          <div><div class="cp-label">Program</div><div class="cp-val">Lun–Vin: 08:00–20:00</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="contact-form">
+        <div class="cf-group">
+          <label>Numele tău</label>
+          <input type="text" id="cf-name" placeholder="Ion Popescu">
+        </div>
+        <div class="cf-group">
+          <label>Email</label>
+          <input type="email" id="cf-email" placeholder="email@example.com">
+        </div>
+        <div class="cf-group">
+          <label>Subiect</label>
+          <select id="cf-subject">
+            <option>Întrebare despre șofer</option>
+            <option>Problemă cu rezervarea</option>
+            <option>Sugestie / Reclamație</option>
+            <option>Înregistrare șofer nou</option>
+            <option>Altele</option>
+          </select>
+        </div>
+        <div class="cf-group">
+          <label>Mesaj</label>
+          <textarea id="cf-msg" placeholder="Descrie întrebarea ta..."></textarea>
+        </div>
+        <button class="cf-submit" onclick="submitForm()">Trimite Mesajul →</button>
+        <div id="form-success">✓ Mesaj trimis! Te contactăm în 24h.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Transport<span>.MD</span></div>
+  <small>© 2024 Transport.MD · Toate drepturile rezervate · Republica Moldova</small>
+  <small>Platformă de conectare călători–șoferi</small>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const DRIVERS = [
+  {id:1,nume:"Popescu",prenume:"Ion",ruta:"Chisinau-Bucuresti",km:12500,salariu:8500,rating:4.9,trips:87},
+  {id:2,nume:"Ionescu",prenume:"Vasile",ruta:"Chisinau-Balti",km:4200,salariu:5200,rating:4.7,trips:34},
+  {id:3,nume:"Rusu",prenume:"Alexandru",ruta:"Chisinau-Iasi",km:9800,salariu:7300,rating:4.8,trips:65},
+  {id:4,nume:"Marin",prenume:"Gheorghe",ruta:"Chisinau-Odessa",km:15600,salariu:9100,rating:4.9,trips:112},
+  {id:5,nume:"Popa",prenume:"Andrei",ruta:"Chisinau-Cahul",km:6700,salariu:6000,rating:4.6,trips:41},
+  {id:6,nume:"Nastase",prenume:"Mihai",ruta:"Chisinau-Comrat",km:5100,salariu:5800,rating:4.7,trips:28},
+  {id:7,nume:"Toma",prenume:"Stefan",ruta:"Chisinau-Soroca",km:7800,salariu:6500,rating:4.8,trips:53},
+];
+
+const PRICE_MAP = {
+  "Chisinau-Bucuresti":350,"Chisinau-Balti":80,
+  "Chisinau-Iasi":120,"Chisinau-Odessa":150,
+  "Chisinau-Cahul":90,"Chisinau-Comrat":70,"Chisinau-Soroca":100
+};
+
+let currentDrivers = [...DRIVERS];
+
+// ═══════════════════════════════════════════
+// CURSOR
+// ═══════════════════════════════════════════
+const cur = document.getElementById('cursor');
+const curR = document.getElementById('cursor-ring');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX + 'px';
+  cur.style.top  = e.clientY + 'px';
+  setTimeout(() => {
+    curR.style.left = e.clientX + 'px';
+    curR.style.top  = e.clientY + 'px';
+  }, 60);
+});
+
+// ═══════════════════════════════════════════
+// PIXEL INTRO
+// ═══════════════════════════════════════════
+(function buildIntro(){
+  const intro = document.getElementById('intro');
+  const COLS = 30, ROWS = 20;
+  // Build ornament pixel pattern (simplified cross-stitch)
+  const pattern = [];
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell = document.createElement('div');
+      cell.className = 'px-cell';
+      intro.appendChild(cell);
+      pattern.push(cell);
+    }
+  }
+  // Animate ornament colors
+  const colors = ['red','ink','gold','','','','red',''];
+  let t = 0;
+  const paint = setInterval(()=>{
+    const idx = Math.floor(Math.random()*pattern.length);
+    pattern[idx].className = 'px-cell ' + colors[Math.floor(Math.random()*colors.length)];
+    t++;
+    if(t > 300) clearInterval(paint);
+  }, 8);
+
+  // After 1.4s — dissolve away
+  setTimeout(()=>{
+    // Scatter pixels out
+    pattern.forEach((cell, i) => {
+      setTimeout(()=>{
+        const row = Math.floor(i/COLS);
+        const col = i%COLS;
+        const dx = (col - COLS/2) * 60;
+        const dy = (row - ROWS/2) * 60;
+        cell.style.transition = 'transform .6s cubic-bezier(.16,1,.3,1), opacity .5s';
+        cell.style.transform = `translate(${dx}px,${dy}px) scale(0)`;
+        cell.style.opacity = '0';
+      }, Math.random()*400);
+    });
+    setTimeout(()=>{
+      intro.style.display = 'none';
+      document.getElementById('nav').classList.add('visible');
+      // Reveal hero
+      ['eyebrow','h1','hsub','hact','hstats'].forEach((id,i) => {
+        setTimeout(()=> document.getElementById(id).classList.add('in'), i*150);
+      });
+      document.getElementById('road-container').classList.add('in');
+      animateRoad();
+      animateCounters();
+      startOrnamentCanvas();
+      startAboutCanvas();
+    }, 600);
+  }, 1600);
+})();
+
+// ═══════════════════════════════════════════
+// ROAD SVG ANIMATION
+// ═══════════════════════════════════════════
+function animateRoad(){
+  const g = document.getElementById('road-group');
+  g.setAttribute('opacity','1');
+  const dashes = document.getElementById('dash-group');
+  let offset = 0;
+  setInterval(()=>{
+    offset = (offset + 2) % 80;
+    dashes.style.transform = `translateY(${offset}px)`;
+  }, 30);
+  // Fade in/out road periodically
+  let visible = true;
+  setInterval(()=>{
+    visible = !visible;
+    g.style.transition = 'opacity 2s';
+    g.style.opacity = visible ? '1' : '0.15';
+  }, 5000);
+}
+
+// ═══════════════════════════════════════════
+// COUNTER ANIMATION
+// ═══════════════════════════════════════════
+function animateCounters(){
+  countTo('hn1', 7, 1200);
+  countTo('hn2', 61700, 1600, ' km');
+  countTo('hn3', 7, 1000);
+}
+function countTo(id, target, dur, suffix=''){
+  const el = document.getElementById(id);
+  const start = Date.now();
+  const tick = ()=>{
+    const p = Math.min((Date.now()-start)/dur,1);
+    const val = Math.floor(p * target);
+    el.textContent = val.toLocaleString() + suffix;
+    if(p<1) requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+// ═══════════════════════════════════════════
+// ORNAMENT TOP CANVAS
+// ═══════════════════════════════════════════
+function startOrnamentCanvas(){
+  const cv = document.getElementById('ornament-canvas');
+  cv.width = window.innerWidth;
+  cv.style.opacity = '0.55';
+  const ctx = cv.getContext('2d');
+  const S = 8; // pixel size
+  const cols = Math.ceil(cv.width/S);
+  // Draw repeating pixel ornament pattern
+  const row1 = [1,0,1,1,0,1,1,0,1,0,1,1,0,1,0,0]; // red pattern
+  const row2 = [0,1,0,0,1,0,0,1,1,0,0,1,0,0,1,0]; // black pattern
+  ctx.clearRect(0,0,cv.width,32);
+  for(let c=0;c<cols;c++){
+    const pat1 = row1[c % row1.length];
+    const pat2 = row2[c % row2.length];
+    if(pat1){ ctx.fillStyle='#C0392B'; ctx.fillRect(c*S,0,S-1,S-1); }
+    if(pat2){ ctx.fillStyle='#1A1208'; ctx.fillRect(c*S,S,S-1,S-1); }
+    if(pat1&&pat2){ ctx.fillStyle='#B8860B'; ctx.fillRect(c*S,S*2,S-1,S-1); }
+  }
+}
+window.addEventListener('resize', startOrnamentCanvas);
+
+// ═══════════════════════════════════════════
+// ABOUT CANVAS — animated map dots
+// ═══════════════════════════════════════════
+function startAboutCanvas(){
+  const cv = document.getElementById('road-video-canvas');
+  const W = cv.offsetWidth, H = cv.offsetHeight;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  // Moldova-like shape simplified
+  const cities = [
+    {name:'Chișinău',x:.45,y:.55,main:true},
+    {name:'Bălți',x:.35,y:.28,main:false},
+    {name:'Iași',x:.15,y:.52,main:false},
+    {name:'Odessa',x:.75,y:.82,main:false},
+    {name:'Cahul',x:.42,y:.88,main:false},
+    {name:'Soroca',x:.48,y:.12,main:false},
+    {name:'București',x:.08,y:.7,main:false},
+  ];
+  const routes = [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]];
+  let t = 0;
+  // Animated car dots
+  const cars = routes.map(r => ({r, p:Math.random(), dir:1}));
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // Draw subtle grid
+    ctx.strokeStyle = 'rgba(255,255,255,.05)';
+    ctx.lineWidth = 1;
+    for(let i=0;i<W;i+=40){ ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke(); }
+    for(let j=0;j<H;j+=40){ ctx.beginPath();ctx.moveTo(0,j);ctx.lineTo(W,j);ctx.stroke(); }
+    // Draw route lines
+    routes.forEach(([a,b])=>{
+      const ca=cities[a], cb=cities[b];
+      ctx.beginPath();
+      ctx.moveTo(ca.x*W, ca.y*H);
+      ctx.lineTo(cb.x*W, cb.y*H);
+      ctx.strokeStyle='rgba(255,255,255,.12)';
+      ctx.lineWidth=1.5;ctx.setLineDash([6,8]);ctx.stroke();ctx.setLineDash([]);
+    });
+    // Animated cars
+    cars.forEach(car=>{
+      const [a,b] = car.r;
+      const ca=cities[a], cb=cities[b];
+      car.p += 0.004 * car.dir;
+      if(car.p>1){car.p=1;car.dir=-1;}
+      if(car.p<0){car.p=0;car.dir=1;}
+      const x = ca.x*W + (cb.x-ca.x)*W*car.p;
+      const y = ca.y*H + (cb.y-ca.y)*H*car.p;
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+      ctx.fillStyle='#E74C3C';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);
+      ctx.fillStyle='rgba(231,76,60,.25)';ctx.fill();
+    });
+    // Draw cities
+    cities.forEach(c=>{
+      const x=c.x*W, y=c.y*H;
+      ctx.beginPath();ctx.arc(x,y,c.main?7:5,0,Math.PI*2);
+      ctx.fillStyle=c.main?'#FFD600':'rgba(255,255,255,.7)';ctx.fill();
+      ctx.font=`${c.main?600:400} ${c.main?13:11}px DM Sans, sans-serif`;
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.fillText(c.name, x+10, y+4);
+    });
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ═══════════════════════════════════════════
+// RENDER DRIVER CARDS
+// ═══════════════════════════════════════════
+function renderCards(data){
+  const g = document.getElementById('drivers-grid');
+  if(!data.length){
+    g.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:3rem;font-size:.9rem">Niciun șofer găsit pentru aceste criterii.</div>';
+    return;
+  }
+  g.innerHTML = data.map(d=>`
+    <div class="driver-card">
+      <div class="dc-avatar">${d.nume[0]}</div>
+      <div class="dc-name">${d.nume} ${d.prenume}</div>
+      <div class="dc-route">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        ${d.ruta.replace('-',' → ')}
+      </div>
+      <div class="dc-chips">
+        <span class="chip red">${d.km.toLocaleString()} km</span>
+        <span class="chip gold">${d.rating} ★</span>
+        <span class="chip">${d.trips} curse</span>
+      </div>
+      <div class="dc-meta">
+        <div class="dc-price">${(PRICE_MAP[d.ruta]||'—')} <span>lei/pers</span></div>
+        <button class="dc-btn" onclick="alert('Contactează: ${d.prenume} ${d.nume}\\nRuta: ${d.ruta}\\nTel: +373 7X XXX XXX')">Contactează</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════
+// SEARCH & FILTER
+// ═══════════════════════════════════════════
+function searchDrivers(){
+  const ruta = document.getElementById('s-ruta').value.trim().toLowerCase();
+  const km   = parseInt(document.getElementById('s-km').value)||0;
+  const sal  = parseInt(document.getElementById('s-sal').value)||Infinity;
+  const sort = document.getElementById('s-sort').value;
+  let d = DRIVERS.filter(x=>
+    (!ruta || x.ruta.toLowerCase().includes(ruta)) &&
+    x.km >= km && x.salariu <= sal
+  );
+  d = applySortStr(d, sort);
+  currentDrivers = d;
+  renderCards(d);
+  document.getElementById('search-section').scrollIntoView({behavior:'smooth'});
+}
+
+function resetSearch(){
+  document.getElementById('s-ruta').value='';
+  document.getElementById('s-km').value='';
+  document.getElementById('s-sal').value='';
+  document.getElementById('s-sort').value='';
+  currentDrivers=[...DRIVERS];
+  renderCards(DRIVERS);
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.filter-chip').classList.add('active');
+}
+
+function filterBy(ruta, btn){
+  if(btn){
+    document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const d = ruta==='all' ? [...DRIVERS] : DRIVERS.filter(x=>x.ruta===ruta);
+  currentDrivers=d;
+  renderCards(d);
+}
+
+function applySortStr(arr, s){
+  if(!s) return arr;
+  return [...arr].sort((a,b)=>{
+    if(s==='km_desc') return b.km-a.km;
+    if(s==='km_asc')  return a.km-b.km;
+    if(s==='sal_asc') return a.salariu-b.salariu;
+    if(s==='sal_desc')return b.salariu-a.salariu;
+    if(s==='nume')    return a.nume.localeCompare(b.nume);
+    return 0;
+  });
+}
+
+// ═══════════════════════════════════════════
+// STATS TABLE
+// ═══════════════════════════════════════════
+function renderStatsTable(data){
+  document.getElementById('stats-tbody').innerHTML = data.map(d=>`
+    <tr>
+      <td>${d.id}</td>
+      <td class="td-name">${d.nume}</td>
+      <td>${d.prenume}</td>
+      <td><span class="td-badge">${d.ruta.replace('-',' → ')}</span></td>
+      <td>${d.km.toLocaleString()} km</td>
+      <td>${d.salariu.toLocaleString()} lei</td>
+      <td><span class="td-badge" style="background:rgba(0,180,0,.08);color:#2a7a2a;border-color:rgba(0,180,0,.2)">Activ</span></td>
+    </tr>
+  `).join('');
+}
+
+function sortTable(crit, btn){
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  let d = [...DRIVERS];
+  if(crit==='salariu_desc') d.sort((a,b)=>b.salariu-a.salariu);
+  else if(crit==='salariu_asc') d.sort((a,b)=>a.salariu-b.salariu);
+  else if(crit==='km_desc') d.sort((a,b)=>b.km-a.km);
+  else if(crit==='km_asc')  d.sort((a,b)=>a.km-b.km);
+  else if(crit==='nume')    d.sort((a,b)=>a.nume.localeCompare(b.nume));
+  renderStatsTable(d);
+}
+
+function renderStatCards(){
+  const maxSal = DRIVERS.reduce((a,b)=>a.salariu>b.salariu?a:b);
+  const minSal = DRIVERS.reduce((a,b)=>a.salariu<b.salariu?a:b);
+  const maxKm  = DRIVERS.reduce((a,b)=>a.km>b.km?a:b);
+  const avgSal = Math.round(DRIVERS.reduce((s,x)=>s+x.salariu,0)/DRIVERS.length);
+  const avgKm  = Math.round(DRIVERS.reduce((s,x)=>s+x.km,0)/DRIVERS.length);
+  document.getElementById('stat-cards-row').innerHTML = `
+    <div class="stat-card-s"><div class="scn">${maxSal.salariu.toLocaleString()} lei</div><div class="scl">Salariu Maxim · ${maxSal.nume}</div></div>
+    <div class="stat-card-s"><div class="scn">${minSal.salariu.toLocaleString()} lei</div><div class="scl">Salariu Minim · ${minSal.nume}</div></div>
+    <div class="stat-card-s"><div class="scn">${maxKm.km.toLocaleString()} km</div><div class="scl">Km Maximi · ${maxKm.nume}</div></div>
+    <div class="stat-card-s"><div class="scn">${avgSal.toLocaleString()} lei</div><div class="scl">Salariu Mediu</div></div>
+    <div class="stat-card-s"><div class="scn">${avgKm.toLocaleString()} km</div><div class="scl">Km Medii Parcurși</div></div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// FAQ
+// ═══════════════════════════════════════════
+const FAQS = [
+  {q:"Cum se face plata?", a:"Plata se face direct cu șoferul, în numerar sau prin transfer bancar. Transport.MD nu procesează plăți — suntem o platformă de conectare."},
+  {q:"Șoferii sunt verificați?", a:"Da. Fiecare șofer este verificat manual: permis de conducere, asigurare, antecedente penale și referințe de la clienți anteriori."},
+  {q:"Ce fac dacă am o problemă în drum?", a:"Contactează serviciul nostru de urgență la +373 22 000 001, disponibil 24/7. Vom interveni și vom găsi o soluție rapidă."},
+  {q:"Pot anula rezervarea?", a:"Da, poți anula gratuit cu cel puțin 2 ore înainte de plecare. Anulările tardive pot implica o taxă de 10% din tarif."},
+  {q:"Există limite de bagaj?", a:"Limita standard este 20 kg per persoană. Bagajele suplimentare se negociază direct cu șoferul la momentul rezervării."},
+  {q:"Cum devin șofer pe platformă?", a:"Completează formularul de înregistrare din secțiunea Contact, alege 'Înregistrare șofer nou', și un operator te va contacta în 24h."},
+];
+
+document.getElementById('faq-list').innerHTML = FAQS.map((f,i)=>`
+  <div class="faq-item" id="faq-${i}">
+    <button class="faq-q" onclick="toggleFaq(${i})">
+      <span>${f.q}</span>
+      <span class="icon">+</span>
+    </button>
+    <div class="faq-a">${f.a}</div>
+  </div>
+`).join('');
+
+function toggleFaq(i){
+  const el = document.getElementById('faq-'+i);
+  el.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════
+// CONTACT FORM
+// ═══════════════════════════════════════════
+function submitForm(){
+  const n=document.getElementById('cf-name').value.trim();
+  const e=document.getElementById('cf-email').value.trim();
+  if(!n||!e){alert('Completează Numele și Email-ul.'); return;}
+  document.querySelector('.cf-submit').style.display='none';
+  document.getElementById('form-success').style.display='block';
+  setTimeout(()=>{
+    document.querySelector('.cf-submit').style.display='block';
+    document.getElementById('form-success').style.display='none';
+    ['cf-name','cf-email','cf-msg'].forEach(id=>document.getElementById(id).value='');
+  }, 4000);
+}
+
+// ═══════════════════════════════════════════
+// SCROLL REVEAL
+// ═══════════════════════════════════════════
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting) e.target.classList.add('in');});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+renderCards(DRIVERS);
+renderStatsTable(DRIVERS);
+renderStatCards();
+</script>
+</body>
+</html>
